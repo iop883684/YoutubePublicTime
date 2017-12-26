@@ -1,0 +1,186 @@
+<html>
+<head>
+<title>Set and retrieve localized metadata for a video</title>
+</head>
+<body>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+<script src="https://jonthornton.github.io/jquery-timepicker/jquery.timepicker.js"></script>
+<link rel="stylesheet" type="text/css" href="https://jonthornton.github.io/jquery-timepicker/jquery.timepicker.css" />
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.5.0/js/bootstrap-datepicker.js"></script>
+<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.5.0/css/bootstrap-datepicker.standalone.css" />
+
+
+<script src="http://jonthornton.github.io/Datepair.js/dist/datepair.js"></script>
+<script src="http://jonthornton.github.io/Datepair.js/dist/jquery.datepair.js"></script>
+
+<br>
+<button type="button" onclick="clearParams()">Reset</button>
+<br>
+-------------------------------------------------
+<br><br>
+
+<div>
+<!-- <form method="GET" id="testformid"> -->
+    List video id: (private video only)
+    <br>
+    <textarea form ="testformid" name="videoId" id="taid" cols="35" wrap="soft"></textarea>
+
+    <br>
+    <input type="button" id="getId" value="Get list video" onclick="getListVideo();" >
+    <br>
+    <input type="text" id ="token" style="display: none;" placeholder= "token">
+
+    <br><br>
+    Select public time:
+
+    <p id="datepairExample">
+      <input type="text" name="date" class="date start" />
+      <input type="text" name="time" class="time start" /> 
+    </p>
+
+</div> 
+<input type="submit" id="scheduler" value="Scheduler Pulbic" onclick="setTimeVideo();">
+<!-- </form> -->
+<br><br>
+-------------------------------------------------
+<br>
+Result:
+<div id="result">
+</div>
+<br>
+<br>
+
+<script>
+    // initialize input widgets first
+    $('#datepairExample .time').timepicker({
+        'disableTextInput':false,
+        'showDuration': true,
+        'timeFormat': 'G:i'
+    });
+  
+
+    $('#datepairExample .date').datepicker({
+        'disableTextInput':false,
+        'format': 'yyyy-mm-dd',
+        'autoclose': true
+    });
+
+    $('#datepairExample .time').timepicker('setTime', new Date());  
+    $('#datepairExample .date').datepicker('setDate', new Date());
+
+    // initialize datepair
+    $('#datepairExample').datepair();
+
+    function clearParams () {
+        location.reload();
+    }
+
+
+    function getListVideo (){
+
+
+        btSend = document.getElementById("getId");
+        btSend.style.visibility = "hidden";
+
+        var ajaxurl = 'request.php',
+
+        token = document.getElementById("token");
+        data =  {'token': token.value};
+        $.post(ajaxurl, data, function (response) {
+            // Response div goes here.
+            // alert(response);
+           
+           var obj = JSON.parse(response);
+           console.log(obj);
+
+           if (obj['status']== 0) {
+
+                document.getElementById("result").innerHTML += "<li>" + obj['message'] +"</li>";  
+                btSend.style.visibility = "visible";
+                return;
+           };
+
+           listTextId =  document.getElementById("taid");
+
+           if (listTextId.value.length > 0) {
+
+            listTextId.value += ","+ obj['privateVideo'];
+
+           } else{
+
+            listTextId.value += obj['privateVideo'];
+
+           }
+           
+           document.getElementById("token").value = obj['nextPageToken']; 
+
+           updateResult(obj);
+
+           btSend.style.visibility = "visible";
+           btSend.value = "Load more";
+           
+        });
+
+    }
+
+    function updateResult (obj){
+
+        var result = '';
+        var listVideo = obj['listId'];
+        var listTitle = obj['listTitle'];
+        var listPrivate = obj['private'];
+
+        for (var i = 0; i < listVideo.length; i++) {
+
+            result += "<li> " + listVideo[i] + "  --  " + listTitle[i] + "  --  " + listPrivate[i]+ "</li>";
+
+        };
+
+        document.getElementById("result").innerHTML += result;  
+
+    }
+
+
+    function setTimeVideo(){
+
+        listId = document.getElementById("taid");
+        var partsOfStr = listId.value.split(',');
+
+        var dateValue = $('#datepairExample .date').val();
+        var timeValue = $('#datepairExample .time').val();
+        var fullDate = dateValue+"T"+timeValue+":00.50Z";
+
+        console.log(fullDate);
+
+        for (var i = 0; i < partsOfStr.length; i++) {
+            
+            sendRequest(partsOfStr[i], fullDate);
+
+        };
+
+    }
+
+    function sendRequest( videoId, time){
+
+        data =  {'videoId': videoId,
+                    'time':time};
+
+        $.post('request.php', data, function (response) {
+            // Response div goes here.;
+
+           var obj = JSON.parse(response);
+           console.log(obj);
+           
+           document.getElementById("result").innerHTML += "<li>" + obj['message'] +"</li>"; 
+           
+           
+        });
+
+    }
+
+
+
+</script>
+</body>
+</html>
