@@ -2,7 +2,7 @@
 
 Script for updating Youtube video's privacy status using OAuth
 This code is to be run automatically to update a Youtube video's privacy status
-### http://localhost/youtube/home.php
+### Link: http://localhost/youtube/home.php
 
 
 ## Get the Google PHP Client Library
